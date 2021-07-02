@@ -95,6 +95,15 @@ func (stmt *stmt) queryContext(ctx context.Context, args []driver.NamedValue) (d
 		finish()
 		return nil, err
 	}
+	if meta == nil {
+		sc := make(chan *data.Block)
+		defer close(sc)
+		return &rows{
+			ch:     stmt.ch,
+			finish: finish,
+			stream: sc,
+		}, nil
+	}
 	rows := rows{
 		ch:           stmt.ch,
 		finish:       finish,
