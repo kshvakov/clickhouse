@@ -6,6 +6,7 @@ import (
 	"github.com/ClickHouse/clickhouse-go/lib/binary"
 )
 
+// NOTE: Supported values range: 1970-01-01 - 2106-01-01.
 type DateTime struct {
 	base
 	Timezone *time.Location
@@ -15,6 +16,9 @@ func (dt *DateTime) Read(decoder *binary.Decoder, isNull bool) (interface{}, err
 	sec, err := decoder.Int32()
 	if err != nil {
 		return nil, err
+	}
+	if sec == 0 {
+		return time.Time{}, nil
 	}
 	return time.Unix(int64(sec), 0).In(dt.Timezone), nil
 }
@@ -65,6 +69,10 @@ func (dt *DateTime) Write(encoder *binary.Encoder, v interface{}) error {
 			T:      v,
 			Column: dt,
 		}
+	}
+
+	if timestamp <= minTimestamp || timestamp >= maxTimestamp {
+		timestamp = 0
 	}
 
 	return encoder.Int32(int32(timestamp))
